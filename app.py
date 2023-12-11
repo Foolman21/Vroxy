@@ -1,4 +1,5 @@
 import requests
+from bs4 import BeautifulSoup
 
 # Set up the proxy
 proxy = {
@@ -21,12 +22,14 @@ soup = BeautifulSoup(response.text, 'html.parser')
 # Find all the search results
 results = soup.find_all('a', class_='result__a')
 
-# Visit the first search result
-first_result = results[0]
-first_result_url = first_result['href']
-
-# Make the request to the first search result
-response = requests.get(first_result_url, proxies=proxy)
-
-# Print the response
-print(response.text)
+# Visit each search result
+for result in results:
+    # Extract the URL from the search result
+    result_url = result['href']
+    
+    # Make the request with the proxy
+    response = requests.get(result_url, proxies=proxy)
+    
+    # Print the response content
+    print(f"\n**Visiting: {result_url}**\n")
+    print(response.text)
