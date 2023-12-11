@@ -1,60 +1,83 @@
+from flask import Flask, render_template, request
 import requests
 from bs4 import BeautifulSoup
 
-# Define function to handle form submission with proxy
-def submit_form(url, data, proxy):
-    response = requests.post(url, data=data, proxies=proxy)
-    soup = BeautifulSoup(response.text, 'html.parser')
-    
-    if url.endswith('/search'):
+app = Flask(__name__)
+
+def search(query):
+    """
+    Sends a search query to DuckDuckGo through the proxy and extracts results.
+    """
+    try:
+        # Set proxy details
+        proxy = {
+            "http": "http://127.0.0.1:8080",
+            "https": "https://127.0.0.1:8080",
+        }
+
+        # Send search request
+        response = requests.post(
+            f"https://duckduckgo.com/search", data={"q": query}, proxies=proxy
+        )
+        soup = BeautifulSoup(response.content, "html.parser")
+
         # Extract search results
-        results = soup.find_all('a', class_='result__a')
-        for result in results:
-            # Extract title and URL
-            title = result.find('h2', class_='result__title').text
-            result_url = result['href']
-            print(f"**Title:** {title}")
-            print(f"**URL:** {result_url}")
-            print('-' * 50)
-    elif url.endswith('/visit'):
+        results = []
+        for result in soup.find_all("a", class_="result__a"):
+            title = result.find("h2", class_="result__title").text
+            url = result["href"]
+            results.append({"title": title, "url": url})
+
+        return results
+    except Exception as e:
+        return []
+
+def visit(url):
+    """
+    Visits the target URL and extracts website content.
+    """
+    try:
+        # Set proxy details
+        proxy = {
+            "http": "http://127.0.0.1:8080",
+            "https": "https://127.0.0.1:8080",
+        }
+
+        # Send visit request
+        response = requests.get(url, proxies=proxy)
+        soup = BeautifulSoup(response.content, "html.parser")
+
         # Extract website content
-        content = soup.find('div', id='content')
-        print(f"**Website Content:**")
-        print(content)
+        content = soup.find("div", id="content")
+
+        return content
+    except Exception as e:
+        return None
+
+@app.route("/", methods=["GET", "POST"])
+def index():
+    """
+    Handles search and visit requests.
+    """
+    if request.method == "GET":
+        query = request.args.get("q")
+        results = []
+        if query:
+            results = search(query)
+        return render_template("index.html", results=results)
     else:
-        raise Exception(f"Unknown URL endpoint: {url}")
+        target_url = request.form.get("url")
+        content = None
+        if target_url:
+            content = visit(target_url)
+        return render_template("visit.html", content=content)
 
-    return soup
+@app.errorhandler(Exception)
+def handle_error(error):
+    """
+    Handles and displays error messages.
+    """
+    return render_template("error.html", error=error)
 
-# Set up the proxy
-proxy = {
-    'http': 'http://127.0.0.1:8080',
-    'https': 'https://127.0.0.1:8080',
-}
-
-# Get request method and handle accordingly
-if request.method == 'GET':
-    query = request.args.get('q')
-    
-    # Submit the form with the search query
-    if query:
-        data = {'q': query}
-        soup = submit_form('/search', data, proxy)
-    else:
-        # Display the search form
-        print(f"Welcome to the DuckDuckGo Proxy! Use the form below to search the web.")
-elif request.method == 'POST':
-    target_url = request.form.get('url')
-    
-    # Submit the form with the target URL
-    if target_url:
-        data = {'url': target_url}
-        soup = submit_form('/visit', data, proxy)
-    else:
-        # Display the visit form
-        print(f"Enter a URL to visit:")
-
-# Handle any other requests
-else:
-    print(f"Unsupported request method: {request.method}")
-
+if __name__ == "__main__":
+    app.run(debug=True)
