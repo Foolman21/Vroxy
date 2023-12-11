@@ -15,6 +15,10 @@ def search(query):
             "https": "https://127.0.0.1:8080",
         }
 
+        # Check for empty query
+        if not query:
+            return []
+
         # Send search request
         response = requests.post(
             f"https://duckduckgo.com/search", data={"q": query}, proxies=proxy
