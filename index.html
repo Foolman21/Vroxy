@@ -1,33 +1,16 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DuckDuckGo Proxy</title>
+    <title>Website Proxy</title>
 </head>
 <body>
-    <h1>DuckDuckGo Proxy</h1>
-    <form action="/search" method="GET">
-        <label for="q">Search:</label>
-        <input type="text" name="q" id="q" required>
-        <button type="submit">Search</button>
+    <form onsubmit="loadWebsite(event)">
+        <input type="text" id="url-input" placeholder="Enter website URL">
+        <input type="submit" value="Load">
     </form>
+    
+    <iframe id="website-frame" style="width: 100%; height: 90vh; border: none;"></iframe>
 
-    <hr>
-
-    <form action="/visit" method="GET">
-        <label for="url">URL:</label>
-        <input type="url" name="url" id="url" required>
-        <button type="submit">Visit</button>
-    </form>
-
-    <script>
-        const searchForm = document.getElementById('search-form');
-        searchForm.addEventListener('submit', function(event) {
-            event.preventDefault();
-            const query = document.getElementById('q').value;
-            window.location.href = `/search?q=${query}`;
-        });
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>
