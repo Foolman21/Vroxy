@@ -15,5 +15,12 @@ query = 'python proxy'
 # Make the request
 response = requests.get(url, params={'q': query}, proxies=proxy)
 
-# Print the response
-print(response.text)
+# Parse the response
+soup = BeautifulSoup(response.text, 'html.parser')
+
+# Find all the search results
+results = soup.find_all('a', class_='result__a')
+
+# Print the search results
+for result in results:
+    print(result['href'])
