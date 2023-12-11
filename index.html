@@ -2,22 +2,32 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>DuckDuckGo Proxy Search</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DuckDuckGo Proxy</title>
 </head>
 <body>
-    <h1>DuckDuckGo Proxy Search</h1>
-    <form method="GET">
-        <label for="q">Search query:</label>
-        <input type="text" name="q" id="q">
+    <h1>DuckDuckGo Proxy</h1>
+    <form action="/search" method="GET">
+        <label for="q">Search:</label>
+        <input type="text" name="q" id="q" required>
         <button type="submit">Search</button>
     </form>
-    {% if results %}
-        <h2>Search Results</h2>
-        <ul>
-            {% for result in results %}
-                <li><a href="{{ result.url }}">{{ result.title }}</a></li>
-            {% endfor %}
-        </ul>
-    {% endif %}
+
+    <hr>
+
+    <form action="/visit" method="GET">
+        <label for="url">URL:</label>
+        <input type="url" name="url" id="url" required>
+        <button type="submit">Visit</button>
+    </form>
+
+    <script>
+        const searchForm = document.getElementById('search-form');
+        searchForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            const query = document.getElementById('q').value;
+            window.location.href = `/search?q=${query}`;
+        });
+    </script>
 </body>
 </html>
