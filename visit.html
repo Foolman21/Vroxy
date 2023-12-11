@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Website Content</title>
+</head>
+<body>
+    <h1>Website Content</h1>
+    {% if content %}
+        {{ content }}
+    {% else %}
+        <p>Error retrieving website content.</p>
+    {% endif %}
+</body>
+</html>
