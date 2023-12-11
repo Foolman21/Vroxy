@@ -21,6 +21,12 @@ soup = BeautifulSoup(response.text, 'html.parser')
 # Find all the search results
 results = soup.find_all('a', class_='result__a')
 
-# Print the search results
-for result in results:
-    print(result['href'])
+# Visit the first search result
+first_result = results[0]
+first_result_url = first_result['href']
+
+# Make the request to the first search result
+response = requests.get(first_result_url, proxies=proxy)
+
+# Print the response
+print(response.text)
