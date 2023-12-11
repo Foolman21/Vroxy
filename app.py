@@ -1,87 +1,62 @@
-from flask import Flask, render_template, request
-import requests
+from flask import Flask, request
 from bs4 import BeautifulSoup
+import requests
 
 app = Flask(__name__)
 
-def search(query):
+@app.route("/search")
+def search():
+    query = request.args.get("q")
+    
+    # Use DuckDuckGo's API to perform the search
+    url = f"https://api.duckduckgo.com/?q={query}"
+    response = requests.get(url)
+    data = response.json()
+
+    # Extract and format search results
+    results = []
+    for result in data["results"]:
+        title = result["FirstURL"]
+        description = result["Text"]
+        results.append(f"<h3><a href='/visit?url={title}'>{title}</a></h3><p>{description}</p>")
+
+    # Return search results in HTML format
+    return f"""
+        <h1>DuckDuckGo Proxy</h1>
+        <p>Search results for "{query}"</p>
+        <hr>
+        {"".join(results)}
     """
-    Sends a search query to DuckDuckGo through the proxy and extracts results.
-    """
-    try:
-        # Set proxy details
-        proxy = {
-            "http": "http://127.0.0.1:8080",
-            "https": "https://127.0.0.1:8080",
-        }
 
-        # Check for empty query
-        if not query:
-            return []
+@app.route("/visit")
+def visit():
+    url = request.args.get("url")
 
-        # Send search request
-        response = requests.post(
-            f"https://duckduckgo.com/search", data={"q": query}, proxies=proxy
-        )
-        soup = BeautifulSoup(response.content, "html.parser")
+    # Fetch the content of the requested URL
+    response = requests.get(url)
+    content = response.content
 
-        # Extract search results
-        results = []
-        for result in soup.find_all("a", class_="result__a"):
-            title = result.find("h2", class_="result__title").text
-            url = result["href"]
-            results.append({"title": title, "url": url})
+    # Parse the content as HTML
+    soup = BeautifulSoup(content, "lxml")
 
-        return results
-    except Exception as e:
-        return []
+    # Replace all external resources with proxied versions
+    for img in soup.find_all("img"):
+        # Replace image src with a proxy URL
+        img["src"] = f"/proxy_image?url={img['src']}"
 
-def visit(url):
-    """
-    Visits the target URL and extracts website content.
-    """
-    try:
-        # Set proxy details
-        proxy = {
-            "http": "http://127.0.0.1:8080",
-            "https": "https://127.0.0.1:8080",
-        }
+    # Return the proxied HTML content
+    return soup.prettify()
 
-        # Send visit request
-        response = requests.get(url, proxies=proxy)
-        soup = BeautifulSoup(response.content, "html.parser")
+@app.route("/proxy_image")
+def proxy_image():
+    image_url = request.args.get("url")
 
-        # Extract website content
-        content = soup.find("div", id="content")
+    # Fetch the image content
+    image_response = requests.get(image_url)
+    image_content = image_response.content
 
-        return content
-    except Exception as e:
-        return None
-
-@app.route("/", methods=["GET", "POST"])
-def index():
-    """
-    Handles search and visit requests.
-    """
-    if request.method == "GET":
-        query = request.args.get("q")
-        results = []
-        if query:
-            results = search(query)
-        return render_template("index.html", results=results)
-    else:
-        target_url = request.form.get("url")
-        content = None
-        if target_url:
-            content = visit(target_url)
-        return render_template("visit.html", content=content)
-
-@app.errorhandler(Exception)
-def handle_error(error):
-    """
-    Handles and displays error messages.
-    """
-    return render_template("error.html", error=error)
+    # Return the image content directly
+    return image_content
 
 if __name__ == "__main__":
     app.run(debug=True)
